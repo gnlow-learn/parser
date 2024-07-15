@@ -14,7 +14,7 @@ const parse =
 (input: string) => {
     let output = input
     let prev = output
-    const list = []
+    const list: string[] = []
     console.log(Object.entries(rule))
 
     while (true) {
@@ -38,6 +38,7 @@ const parse =
     }
 
     console.log(output)
+    console.log(list)
 }
 
 parse({
@@ -51,3 +52,19 @@ parse({
         id colon expr nl
     dedent
 `.trim().replaceAll(/\s+/g, " "))
+
+parse({
+    "n MUL n": "n",
+    "n DIV n": "n",
+    "n ADD n": "n",
+    "n SUB n": "n",
+})("n DIV n MUL n") // wrong
+
+parse({
+    "MUL": "0op",
+    "DIV": "0op",
+    "ADD": "1op",
+    "SUB": "1op",
+    "n 0op n": "n",
+    "n 1op n": "n",
+})("n DIV n MUL n") // right
