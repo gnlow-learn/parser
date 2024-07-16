@@ -36,24 +36,33 @@ export class Parser {
             if (prev == output) break
         }
 
-        const makeTree = (id: string): Tree => {
+        const makeTree = (id: string): Tree[] => {
             const index = Number(id.match(/\d+$/)?.[0] || -1)
-            if (index == -1) return [id]
+            if (index == -1) return [[id]]
 
             const type = id.match(/^(.*[^\d]+)\d+$/)![1]
-            return index < words.length
-                ? words[index]
-                : [
-                    `<${type}>`,
-                    ...list[index - words.length]
+
+            if (index < words.length) {
+                return [words[index]]
+            } else {
+                const result =
+                    list[index - words.length]
                         .split(" ")
-                        .map(makeTree)
-                ]
+                        .flatMap(makeTree)
+                if (type[0] < "Z") {
+                    return [[
+                        type,
+                        ...result,
+                    ]]
+                } else {
+                    return result
+                }
+            }
         }
 
         return output
             .split(" ")
-            .map(makeTree)
+            .flatMap(makeTree)
     }
 
     static parse(rule: Record<string, string>) {
