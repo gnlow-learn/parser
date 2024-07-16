@@ -11,7 +11,7 @@ dedent
 
 type Word = string[]
 
-class Lexer {
+export class Lexer {
     input
     pos = 0
     indents: number[] = []
@@ -42,6 +42,9 @@ class Lexer {
             result += this.read(/\d/)
         }
         return result
+    }
+    readId() {
+        return this.read(/[a-zA-Z]/)
     }
     readNL(): Word[] {
         this.take() // take \n
@@ -75,6 +78,9 @@ class Lexer {
         if (char.match(/\d/)) {
             return [["num", this.readNumber()]]
         }
+        if (char.match(/[a-zA-Z]/)) {
+            return [["id", this.readId()]]
+        }
         if (char.match(/\n/)) {
             return this.readNL()
         }
@@ -104,8 +110,10 @@ class Lexer {
     }
 }
 
+/*
+
 console.log(
-    ...Lexer.lex("1.25 + 2")
+    Lexer.print("1.25 + 2")
 )
 console.log(
     Lexer.print(`
@@ -113,3 +121,5 @@ console.log(
             2
     `)
 )
+
+*/
