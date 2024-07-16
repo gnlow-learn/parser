@@ -1,47 +1,75 @@
 import { Word } from "./Word.ts"
 
-const parse =
-(rule: Record<string, string>) =>
-(words: Word[]) => {
-    const list: string[] = []
-    const input = words.map((word, i) => {
-        return word[0] + i
-    }).join(" ")
-    let output = input
-    let prev = output
-    console.log(Object.entries(rule))
+type Tree = Word | [string, ...Tree[]]
 
-    while (true) {
-        for (const [from, to] of Object.entries(rule)) {
-            prev = output
-            const regex = new RegExp(
-                from
-                    .split(" ")
-                    .map(x => x + "\\d*")
-                    .join(" "),
-            )
-            output = output.replace(regex, match => {
-                console.log(`[${from} -> ${to}]`)
-                console.log(output, "\n")
-                list.push(match)
-                return to + (words.length + list.length - 1)
-            })
-            if (prev != output) break
-        }
-        if (prev == output) break
+export class Parser {
+    rule
+    constructor(rule: Record<string, string>) {
+        this.rule = rule
     }
 
-    console.log(output)
-    console.log(list)
-}
+    parse(words: Word[]): Tree[] {
+        const list: string[] = []
+        const input = words.map((word, i) => {
+            return word[0] + i
+        }).join(" ")
+        let output = input
+        let prev = output
 
-parse({
+        while (true) {
+            for (const [from, to] of Object.entries(this.rule)) {
+                prev = output
+                const regex = new RegExp(
+                    from
+                        .split(" ")
+                        .map(x => x + "\\d*")
+                        .join(" "),
+                )
+                output = output.replace(regex, match => {
+                    // console.log(`[${from} -> ${to}]`)
+                    // console.log(output, "\n")
+                    list.push(match)
+                    return to + (words.length + list.length - 1)
+                })
+                if (prev != output) break
+            }
+            if (prev == output) break
+        }
+
+        const makeTree = (id: string): Tree => {
+            const index = Number(id.match(/\d+$/)?.[0] || -1)
+            if (index == -1) return [id]
+
+            const type = id.match(/^(.*[^\d]+)\d+$/)![1]
+            return index < words.length
+                ? words[index]
+                : [
+                    `<${type}>`,
+                    ...list[index - words.length]
+                        .split(" ")
+                        .map(makeTree)
+                ]
+        }
+
+        return output
+            .split(" ")
+            .map(makeTree)
+    }
+
+    static parse(rule: Record<string, string>) {
+        const parser = new Parser(rule)
+        return parser.parse.bind(parser)
+    }
+}
+console.log(
+Parser.parse({
     "MUL": "0op",
     "DIV": "0op",
     "ADD": "1op",
     "SUB": "1op",
-    "n 0op n": "n",
-    "n 1op n": "n",
+    "expr 0op expr": "expr",
+    "expr 1op expr": "expr",
+    "n": "expr",
 })([
     ["n", "1"],
     ["DIV"],
@@ -49,6 +77,7 @@ parse({
     ["MUL"],
     ["n", "3"],
 ])
+)
 
 /*
 parse({
