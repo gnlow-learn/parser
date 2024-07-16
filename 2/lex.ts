@@ -9,9 +9,12 @@ id colon indent
 dedent
 `
 
+type Word = string[]
+
 class Lexer {
     input
     pos = 0
+    indents: number[] = []
     constructor(input: string) {
         this.input = input
     }
@@ -30,7 +33,7 @@ class Lexer {
     }
 
     skipWS() {
-        this.read(/\s/)
+        this.read(/[^\S\n]/)
     }
     readNumber() {
         let result = this.read(/\d/)
@@ -40,8 +43,27 @@ class Lexer {
         }
         return result
     }
+    readNL(): Word[] {
+        this.take() // take \n
+        const indent = this.read(/ /).length
 
-    getNextToken() {
+        let prevIndent = this.indents[this.indents.length-1] || -1
+
+        const result: Word[] = [["NL"]]
+
+        if (prevIndent < indent) {
+            result.push(["INDENT"])
+            this.indents.push(indent)
+        } else while (prevIndent > indent) {
+            this.indents.pop()
+            prevIndent = this.indents[this.indents.length] || -1
+            result.push(["DEDENT"])
+        }
+
+        return result
+    }
+
+    getNextTokens(): Word[] | false {
         this.skipWS()
 
         const char = this.look()
@@ -51,11 +73,14 @@ class Lexer {
         }
 
         if (char.match(/\d/)) {
-            return ["num", this.readNumber()]
+            return [["num", this.readNumber()]]
+        }
+        if (char.match(/\n/)) {
+            return this.readNL()
         }
 
         if ("+-*/()".includes(char)) {
-            return [this.take()]
+            return [[this.take()]]
         } else {
             throw new Error(`Unexpected ${char}`)
         }
@@ -64,13 +89,27 @@ class Lexer {
     static *lex(input: string) {
         const lexer = new Lexer(input)
         while (true) {
-            const token = lexer.getNextToken()
-            if (!token) break
-            yield token
+            const tokens = lexer.getNextTokens()
+            if (!tokens) break
+            yield* tokens
         }
+        yield* lexer.indents.map(_ => ["DEDENT"])
+    }
+    static print(input: string) {
+        return [...Lexer.lex(input)].map(([type, ...args]) => type + (
+            args.length
+                ? `(${args.join()})`
+                : ""
+        )).join(" ")
     }
 }
 
 console.log(
     ...Lexer.lex("1.25 + 2")
+)
+console.log(
+    Lexer.print(`
+        1 +
+            2
+    `)
 )
