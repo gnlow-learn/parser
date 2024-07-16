@@ -1,15 +1,4 @@
-`
-a:
-    b: 1
-    c: 2
-
-id colon indent
-    id colon expr nl
-    id colon expr nl
-dedent
-`
-
-type Word = string[]
+import { Word } from "./Word.ts"
 
 export class Lexer {
     input
@@ -109,17 +98,3 @@ export class Lexer {
         )).join(" ")
     }
 }
-
-/*
-
-console.log(
-    Lexer.print("1.25 + 2")
-)
-console.log(
-    Lexer.print(`
-        1 +
-            2
-    `)
-)
-
-*/

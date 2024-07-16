@@ -1,20 +1,14 @@
-`
-a:
-    b: 1
-    c: 2
-
-id colon indent
-    id colon expr nl
-    id colon expr nl
-dedent
-`
+import { Word } from "./Word.ts"
 
 const parse =
 (rule: Record<string, string>) =>
-(input: string) => {
+(words: Word[]) => {
+    const list: string[] = []
+    const input = words.map((word, i) => {
+        return word[0] + i
+    }).join(" ")
     let output = input
     let prev = output
-    const list: string[] = []
     console.log(Object.entries(rule))
 
     while (true) {
@@ -30,7 +24,7 @@ const parse =
                 console.log(`[${from} -> ${to}]`)
                 console.log(output, "\n")
                 list.push(match)
-                return to + (list.length - 1)
+                return to + (words.length + list.length - 1)
             })
             if (prev != output) break
         }
@@ -41,6 +35,22 @@ const parse =
     console.log(list)
 }
 
+parse({
+    "MUL": "0op",
+    "DIV": "0op",
+    "ADD": "1op",
+    "SUB": "1op",
+    "n 0op n": "n",
+    "n 1op n": "n",
+})([
+    ["n", "1"],
+    ["DIV"],
+    ["n", "2"],
+    ["MUL"],
+    ["n", "3"],
+])
+
+/*
 parse({
     "id colon expr": "expr",
     "expr nl expr": "expr",
@@ -68,3 +78,5 @@ parse({
     "n 0op n": "n",
     "n 1op n": "n",
 })("n DIV n MUL n") // right
+
+*/
